@@ -1,24 +1,32 @@
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/router'
+import React from 'react'
+import { GetStaticProps } from 'next'
 
 import Layout from '@components/Layout/Layout'
 import ProductSummary from '@components/ProductSummary/ProductSummary'
 
-const ProductPage = () => {
-  const { query } = useRouter()
-  const [product, setProduct] = useState<TProduct | null>(null)
+export const getStaticPaths = async () => {
+  const response = await fetch('https://nextjs-tan-phi-42.vercel.app/api/avo')
+  const { data: productList }: TAPIAvoResponse = await response.json()
+  const paths = productList.map(({id}) => ({
+    params: {id}
+  }))
+  return  {
+    paths,
+    fallback: false
+  }
+}
+export const getStaticProps: GetStaticProps = async ({params}) => {
+  const id = params?.id as String
+  const response = await fetch(`https://nextjs-tan-phi-42.vercel.app/api/avo/${id}`)
+  const product : TProduct = await response.json()
 
-  useEffect(() => {
-    if (query.id) {
-      window
-        .fetch(`/api/avo/${query.id}`)
-        .then((response) => response.json())
-        .then((data: TProduct) => {
-          setProduct(data)
-        })
+  return {
+    props: {
+      product
     }
-  }, [query.id])
-
+  }
+}
+const ProductPage = ({product}: {product:TProduct}) => {
   return (
     <Layout>
       {product == null ? null : <ProductSummary product={product} />}
